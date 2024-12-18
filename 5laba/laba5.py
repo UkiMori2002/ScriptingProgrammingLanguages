@@ -2,13 +2,13 @@ import sys
 import time
 import sqlite3
 import requests
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QProgressBar, QVBoxLayout, QWidget, QTableWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QProgressBar, QVBoxLayout, QWidget, QTableWidget, QTableWidgetItem, QLineEdit, QHBoxLayout
 from PyQt5.QtCore import QThread, pyqtSignal, QTimer
 
 # это класс для выполнения HTTP-запросов в фоновом режиме
 class FetchDataThread(QThread):
     update_progress = pyqtSignal(int)  # сигнал для обновления прогресса
-    data_fetched = pyqtSignal(list)  # сигнал для пердачи данных
+    data_fetched = pyqtSignal(list)  # сигнал для передачи данных
 
     def run(self):
         url = 'https://jsonplaceholder.typicode.com/posts'
@@ -22,7 +22,7 @@ class FetchDataThread(QThread):
         else:
             print(f"Ошибка при выполнении запроса: {response.status_code}")
 
-# ккласс для сохранения данных в бд в фоновом режиме
+# класс для сохранения данных в бд в фоновом режиме
 class SaveDataThread(QThread):
     update_progress = pyqtSignal(int)  # сигнал для обновления прогресса
     data_saved = pyqtSignal()  # сигнал для уведомления о завершении
@@ -56,11 +56,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Многозадачность в PyQt5")
         self.setGeometry(100, 100, 600, 400)
 
-        # основной виджет
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
 
-        # макет
         self.layout = QVBoxLayout(self.central_widget)
 
         # кнопка для загрузки данных
@@ -82,10 +80,22 @@ class MainWindow(QMainWindow):
         self.table_widget.setHorizontalHeaderLabels(["ID", "User ID", "Title", "Body"])
         self.layout.addWidget(self.table_widget)
 
+        # добавляем поле для ввода user_id и кнопку для фильтрации
+        self.filter_layout = QHBoxLayout()
+        self.layout.addLayout(self.filter_layout)
+
+        self.user_id_input = QLineEdit(self)
+        self.user_id_input.setPlaceholderText("Введите user_id")
+        self.filter_layout.addWidget(self.user_id_input)
+
+        self.filter_button = QPushButton("Фильтровать по user_id", self)
+        self.filter_button.clicked.connect(self.filter_posts_by_user_id)
+        self.filter_layout.addWidget(self.filter_button)
+
         # таймер для периодической проверки обновлений
         self.timer = QTimer()
         self.timer.timeout.connect(self.check_for_updates)
-        self.timer.start(15000)  # запускаем таймер каждые 10 секунд
+        self.timer.start(15000)  # запускаем таймер каждые 15 секунд
 
     def start_fetching(self):
         """Запускает загрузку данных в фоновом потоке."""
@@ -140,6 +150,33 @@ class MainWindow(QMainWindow):
             self.table_widget.setItem(row_position, 1, QTableWidgetItem(str(post[1])))
             self.table_widget.setItem(row_position, 2, QTableWidgetItem(post[2]))
             self.table_widget.setItem(row_position, 3, QTableWidgetItem(post[3]))
+
+    def filter_posts_by_user_id(self):
+        """Фильтрует посты по user_id."""
+        user_id = self.user_id_input.text()
+        if not user_id:
+            self.status_label.setText("Введите user_id для фильтрации")
+            return
+
+        conn = sqlite3.connect('posts.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM posts WHERE user_id = ?", (user_id,))
+        filtered_posts = cursor.fetchall()
+        conn.close()
+
+        # очищаем таблицу
+        self.table_widget.setRowCount(0)
+
+        # заполняем таблицу отфильтрованными данными
+        for post in filtered_posts:
+            row_position = self.table_widget.rowCount()
+            self.table_widget.insertRow(row_position)
+            self.table_widget.setItem(row_position, 0, QTableWidgetItem(str(post[0])))
+            self.table_widget.setItem(row_position, 1, QTableWidgetItem(str(post[1])))
+            self.table_widget.setItem(row_position, 2, QTableWidgetItem(post[2]))
+            self.table_widget.setItem(row_position, 3, QTableWidgetItem(post[3]))
+
+        self.status_label.setText(f"Показано постов для user_id: {user_id}")
 
     def check_for_updates(self):
         """Периодическая проверка обновлений на сервере."""

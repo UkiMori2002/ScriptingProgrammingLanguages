@@ -11,40 +11,40 @@ class DataAnalysisApp(QMainWindow):
         self.setWindowTitle("Анализ данных с использованием pandas и matplotlib")
         self.setGeometry(100, 100, 800, 600)
 
-        # Основной виджет
+        # основной виджет
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
 
-        # Макет
+        # макет
         self.layout = QVBoxLayout(self.central_widget)
 
-        # Кнопка для загрузки данных
+        # кнопка для загрузки данных
         self.load_button = QPushButton("Загрузить данные из CSV", self)
         self.load_button.clicked.connect(self.load_data)
         self.layout.addWidget(self.load_button)
 
-        # Поле для отображения статистики
+        # поле для отображения статистики
         self.stats_text = QTextEdit(self)
         self.stats_text.setReadOnly(True)
         self.layout.addWidget(self.stats_text)
 
-        # Выбор типа графика
+        # выбор типа графика
         self.plot_type_combo = QComboBox(self)
         self.plot_type_combo.addItems(["Линейный график", "Гистограмма", "Круговая диаграмма"])
         self.plot_type_combo.currentIndexChanged.connect(self.update_plot)
         self.layout.addWidget(self.plot_type_combo)
 
-        # Поле для отображения графика
+        # поле для отображения графика
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
         self.layout.addWidget(self.canvas)
 
-        # Кнопка для добавления значения на график
+        # кнопка для добавления значения на график
         self.add_value_button = QPushButton("Добавить значение", self)
         self.add_value_button.clicked.connect(self.add_value_to_plot)
         self.layout.addWidget(self.add_value_button)
 
-        # Инициализация данных
+        # иннициализация данных
         self.data = None
 
     def load_data(self):
@@ -101,11 +101,11 @@ class DataAnalysisApp(QMainWindow):
             new_value2 = float(input("Введите новое значение для Value2: "))
             new_category = input("Введите новую категорию: ")
 
-            # Добавляем новые данные в DataFrame
+            # добвление новых данных в DataFrame
             new_row = pd.DataFrame({'Date': [new_date], 'Value1': [new_value1], 'Value2': [new_value2], 'Category': [new_category]})
             self.data = pd.concat([self.data, new_row], ignore_index=True)
 
-            # Обновляем статистику и график
+            # обновляем статистику и график
             self.display_stats()
             self.update_plot()
 

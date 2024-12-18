@@ -16,13 +16,13 @@ cursor.execute('''
         body TEXT
     )
 ''')
-conn.commit()
+conn.commit() # фиксируем изменения в бд
 
 # Модель данных для таблицы
 class PostsTableModel(QAbstractTableModel):
     def __init__(self, data):
         super().__init__()
-        self._data = data
+        self._data = data # тут хранятся данные
 
     def rowCount(self, parent=QModelIndex()):
         return len(self._data)
@@ -47,7 +47,7 @@ class PostsTableModel(QAbstractTableModel):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("PyQt SQLite App")
+        self.setWindowTitle("Приложение")
         self.setGeometry(100, 100, 800, 600)
 
         self.central_widget = QWidget()
@@ -93,7 +93,7 @@ class MainWindow(QMainWindow):
         self.table_view.setModel(self.model)
 
     def filter_data(self):
-        """Фильтрация данных по заголовку."""
+        """Поиска по заголовку."""
         search_text = self.search_line_edit.text().lower()
         cursor.execute("SELECT * FROM posts WHERE LOWER(title) LIKE ?", ('%' + search_text + '%',))
         filtered_data = cursor.fetchall()
@@ -102,14 +102,13 @@ class MainWindow(QMainWindow):
 
     def add_record(self):
         """Добавление новой записи в базу данных."""
-        # ввод заготовленных данных пользователем 
         user_id = 1  
         title = "Новый пост"
         body = "Содержание нового поста: пахпаххвывхахва"
 
         cursor.execute("INSERT INTO posts (user_id, title, body) VALUES (?, ?, ?)", (user_id, title, body))
         conn.commit()
-        self.load_data()  # обновление таблицы
+        self.load_data()  
 
     def delete_record(self):
         """Удаление выбранной записи."""
